@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Images</title>
+    <style>
+        body {
+            background-color: #006994; /* Cor de fundo que remete à vida marinha */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.5); /* Fundo escuro com transparência */
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label {
+            margin: 10px 0;
+            padding: 15px 30px; /* Aumentando o tamanho do botão */
+            background-color: #003366; /* Azul marinho */
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px; /* Aumentando o tamanho da fonte */
+            font-weight: 700;
+        }
+        label:hover {
+            background-color: #00509e;
+        }
+        button {
+            margin-top: 20px;
+            padding: 15px 30px; /* Aumentando o tamanho do botão */
+            background-color: #00509e;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px; /* Aumentando o tamanho da fonte */
+        }
+        button:hover {
+            background-color: #003366;
+        }
+        .file-name {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #003366;
+            color: white;
+            border: 1px solid #00509e;
+            font-size: 16px;
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+            display: none; /* Escondido inicialmente */
+        }
+    </style>
+</head>
+<body>
+    <h1>carregue um arquivo zip com imagens de corais para descobrir se ele é saudavel ou esbranquiçado</h1>
+    <form id="upload-form" action="/predict" method="post" enctype="multipart/form-data">
+        <label for="file-upload">escolha o seu arquivo</label>
+        <input type="file" id="file-upload" name="file" accept=".zip">
+        <div class="file-name" id="file-name">No file chosen</div>
+        <button type="submit">fazer a preedição</button>
+    </form>
+    <div class="result" id="result-box"></div>
+
+    <script>
+        document.getElementById('file-upload').addEventListener('change', function() {
+            var fileName = this.files[0] ? this.files[0].name : 'No file chosen';
+            document.getElementById('file-name').textContent = fileName;
+        });
+
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevenir o envio do formulário
+
+            var formData = new FormData(this);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                var resultBox = document.getElementById('result-box');
+                var resultHTML = '<ul>';
+
+                // Loop através das previsões e construção da mensagem
+                for (var imageName in data) {
+                    if (data.hasOwnProperty(imageName)) {
+                        var prediction = data[imageName];
+                        var message = prediction === 1 ? 'Coral saudável' : 'Coral esbranquiçado';
+                        resultHTML += '<li>' + imageName + ': ' + message + '</li>';
+                    }
+                }
+
+                resultHTML += '</ul>';
+
+                // Exibir as previsões na caixa de resultado
+                resultBox.innerHTML = resultHTML;
+                resultBox.style.display = 'block'; // Mostrar a caixa de resultado
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result-box').textContent = 'An error occurred.';
+                document.getElementById('result-box').style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
+
+
